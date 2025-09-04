@@ -5,7 +5,7 @@ const userContainer = document.querySelector("[data-weather-container]");
 const grantAccessContainer = document.querySelector(".grant-location-container");
 const searchForm = document.querySelector(".form-container");
 const userInfoContainer = document.querySelector(".user-info-container");
-const loadinScreen = document.querySelector(".loading-container");
+const loadingScreen = document.querySelector(".loading-container");
 
 
 let currentTab = userTab;
@@ -48,16 +48,16 @@ function getfromSessionStotage() {
 //     const { lat, lon } = coordinates;
 //     console.log(coordinates);
 //     grantAccessContainer.classList.remove("active");
-//     loadinScreen.classList.add("active");
+//     loadingScreen.classList.add("active");
 //     try {
 //         const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`);
 //         const data = await res.json();
-//         loadinScreen.classList.remove("active");
+//         loadingScreen.classList.remove("active");
 //         userInfoContainer.classList.add("active");
 //         renderWeather(data);
 //     }
 //     catch (error) {
-//         loadinScreen.classList.remove("active");
+//         loadingScreen.classList.remove("active");
 //     }
 // }
 
@@ -91,13 +91,33 @@ searchTab.addEventListener("click", () => {
     switchTab(searchTab);
 });
 
-function getLocation() {
-    if (navigator.geolocation) {
-        console.log("Getting location...");
-        navigator.geolocation.getCurrentPosition(showPosition, handleLocationError);
-    } else {
-        alert("Geolocation is not supported by your browser.");
+async function getLocationByIP() {
+    loadingScreen.classList.add("active");
+    try {
+        const res = await fetch('http://ip-api.com/json/');
+        const data = await res.json();
+        loadingScreen.classList.remove("active");
+        if (data.status === "success") {
+            const userCoordinates = {
+                lat: data.lat,
+                lon: data.lon,
+            };
+            console.log("IP-based coordinates:", userCoordinates);
+            sessionStorage.setItem("user-coordinates", JSON.stringify(userCoordinates));
+            fetchUserWeatherInfo(userCoordinates);
+        } else {
+            alert("Unable to detect location from IP.");
+            grantAccessContainer.classList.add("active");
+        }
+    } catch (error) {
+        loadingScreen.classList.remove("active");
+        alert("Error fetching IP location.");
+        console.error(error);
     }
+}
+
+function getLocation() {
+    getLocationByIP();
 }
 
 function handleLocationError(error) {
@@ -119,13 +139,13 @@ async function fetchUserWeatherInfo(coordinates) {
     const { lat, lon } = coordinates;
     console.log("Fetching weather for:", coordinates);
     grantAccessContainer.classList.remove("active");
-    loadinScreen.classList.add("active");
+    loadingScreen.classList.add("active");
     try {
         const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`);
         const data = await res.json();
         console.log("API Response:", data);
 
-        loadinScreen.classList.remove("active");
+        loadingScreen.classList.remove("active");
         if (data?.cod === 200) {
             userInfoContainer.classList.add("active");
             renderWeather(data);
@@ -133,7 +153,7 @@ async function fetchUserWeatherInfo(coordinates) {
             alert("Failed to fetch weather. Please try again.");
         }
     } catch (error) {
-        loadinScreen.classList.remove("active");
+        loadingScreen.classList.remove("active");
         console.error("Error fetching weather:", error);
         alert("Something went wrong. Please try again.");
     }
@@ -151,14 +171,14 @@ searchForm.addEventListener("submit", (e) => {
 })
 
 async function fetchSearchWeather(city) {
-    loadinScreen.classList.add("active");
+    loadingScreen.classList.add("active");
     userInfoContainer.classList.remove("active");
     grantAccessContainer.classList.remove("active");
 
     try {
         const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=metric`);
         const data = await response.json();
-        loadinScreen.classList.remove("active");
+        loadingScreen.classList.remove("active");
         userInfoContainer.classList.add("active");
         renderWeather(data);
     }
