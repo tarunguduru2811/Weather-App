@@ -94,7 +94,7 @@ searchTab.addEventListener("click", () => {
 async function getLocationByIP() {
     loadingScreen.classList.add("active");
     try {
-        const res = await fetch('http://ip-api.com/json/');
+        const res = await fetch('https://ip-api.com/json/');
         const data = await res.json();
         loadingScreen.classList.remove("active");
         if (data.status === "success") {
