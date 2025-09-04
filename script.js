@@ -92,35 +92,32 @@ searchTab.addEventListener("click", () => {
 });
 
 async function getLocationByIP() {
-    loadingScreen.classList.add("active");
     try {
-        const res = await fetch("https://ipapi.co/json/")
-            .then(res => res.json())
-            .then(data => {
-                return data;
-            })
-            .catch(err => console.error(err));
-
-        const data = res;
-        loadingScreen.classList.remove("active");
-        if (data.status === "success") {
-            const userCoordinates = {
-                lat: data.lat,
-                lon: data.lon,
-            };
-            console.log("IP-based coordinates:", userCoordinates);
-            sessionStorage.setItem("user-coordinates", JSON.stringify(userCoordinates));
-            fetchUserWeatherInfo(userCoordinates);
-        } else {
-            alert("Unable to detect location from IP.");
-            grantAccessContainer.classList.add("active");
+        const response = await fetch("https://ipapi.co/json/");
+        if (!response.ok) {
+            throw new Error(`Failed to fetch IP location, status: ${response.status}`);
         }
+        const data = await response.json();
+        console.log("IP Location data:", data);
+
+        // Extract lat and lon based on your JSON
+        const userCoordinates = {
+            lat: data.latitude,
+            lon: data.longitude,
+        };
+
+        // Store coordinates in sessionStorage if needed
+        sessionStorage.setItem("user-coordinates", JSON.stringify(userCoordinates));
+
+        // Fetch weather data for these coordinates
+        fetchUserWeatherInfo(userCoordinates);
+
     } catch (error) {
-        loadingScreen.classList.remove("active");
-        alert("Error fetching IP location.");
-        console.error(error);
+        console.error("Error fetching location from IP:", error);
+        alert("Unable to detect location automatically. Please search manually.");
     }
 }
+
 
 function getLocation() {
     getLocationByIP();
